@@ -1,0 +1,26 @@
+# ===================================
+# Image Converter Pro Offline
+# Core Dependencies
+# ===================================
+
+# GUI Framework
+PySide6
+
+# Image Processing
+Pillow
+pillow-heif
+pillow-avif-plugin
+opencv-python
+numpy
+watchdog
+reportlab
+rembg
+onnxruntime
+pluggy
+
+# Utilities
+loguru
+tqdm
+
+# Testing
+pytest

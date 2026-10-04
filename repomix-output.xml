@@ -1,0 +1,3491 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+assets/
+  test/
+    output/
+      queue_test.webp
+      result_test.webp
+      sample_converted_001.WEBP
+      sample.webp
+    edit.webp
+    from_heic.webp
+    icon.ico
+    logo.png
+    logo.svg
+    optimized.webp
+    output.gif
+    resized.webp
+    result.webp
+    rotate.webp
+    sample.gif
+    sample.heic
+    sample.jpg
+    sample.png
+    sample2.jpg
+    test.avif
+    test.tiff
+    webp_lossless.webp
+    webp_lossy.webp
+src/
+  ai/
+    __init__.py
+  core/
+    __init__.py
+    batch_processor.py
+    converter.py
+    image_edit_engine.py
+    image_loader.py
+    optimization_engine.py
+    queue_manager.py
+    rename_engine.py
+    resize_engine.py
+    worker.py
+  database/
+    __init__.py
+  formats/
+    __init__.py
+    avif_encoder.py
+    base_encoder.py
+    encoder_manager.py
+    gif_encoder.py
+    ico_encoder.py
+    jpg_encoder.py
+    png_encoder.py
+    svg_converter.py
+    tiff_encoder.py
+    webp_encoder.py
+  ui/
+    themes/
+      style.qss
+    widgets/
+      batch_page.py
+      cards.py
+      content_area.py
+      conversion_worker.py
+      converter_page.py
+      dashboard.py
+      progress_widget.py
+      settings_page.py
+      sidebar.py
+    windows/
+      main_window.py
+    __init__.py
+  utils/
+    __init__.py
+    default_presets.py
+    preset_manager.py
+    settings_manager.py
+  application.py
+  config.py
+  main.py
+tests/
+  test_batch_processor.py
+  test_converter.py
+  test_image_loader.py
+  test_queue_worker.py
+.gitignore
+pytest.ini
+README.md
+requirements-dev.txt
+requirements.txt
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="assets/test/logo.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <path d="M30,1h40l29,29v40l-29,29h-40l-29-29v-40z" stroke="#000" fill="none"/> 
+  <path d="M31,3h38l28,28v38l-28,28h-38l-28-28v-38z" fill="#a23"/> 
+  <text x="50" y="68" font-size="48" fill="#FFF" text-anchor="middle"><![CDATA[410]]></text>
+</svg>
+</file>
+
+<file path="src/ai/__init__.py">
+
+</file>
+
+<file path="src/core/__init__.py">
+from .image_loader import ImageLoader
+from .converter import ImageConverter
+from .batch_processor import BatchProcessor
+from .queue_manager import QueueManager
+from .worker import Worker
+from .resize_engine import ResizeEngine
+from .image_edit_engine import ImageEditEngine
+from .optimization_engine import OptimizationEngine
+from .rename_engine import RenameEngine
+</file>
+
+<file path="src/core/batch_processor.py">
+"""
+Batch Processing Engine
+
+Responsible for:
+- Processing multiple images
+- Managing conversion jobs
+- Collecting results
+"""
+
+
+from pathlib import Path
+
+
+from .image_loader import ImageLoader
+from .converter import ImageConverter
+from .rename_engine import RenameEngine
+
+
+
+class BatchProcessor:
+    """
+    Handle multiple image conversion.
+    """
+
+
+    SUPPORTED_EXTENSIONS = {
+
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".bmp",
+        ".gif",
+        ".tiff",
+        ".heic",
+        ".heif",
+        ".avif",
+
+    }
+
+
+
+    def __init__(self):
+
+        self.results = {
+            "success": [],
+            "failed": []
+        }
+
+
+        self.rename_engine = RenameEngine()
+
+
+
+    def reset_results(self):
+
+        self.results = {
+            "success": [],
+            "failed": []
+        }
+
+
+
+    def get_images_from_folder(
+        self,
+        folder_path
+    ):
+
+        """
+        Get supported images from folder.
+        """
+
+
+        folder = Path(
+            folder_path
+        )
+
+
+        images = []
+
+
+        for file in folder.iterdir():
+
+            if (
+
+                file.is_file()
+
+                and
+
+                file.suffix.lower()
+
+                in self.SUPPORTED_EXTENSIONS
+
+            ):
+
+                images.append(file)
+
+
+        return images
+
+
+
+    def process_files(
+        self,
+        files,
+        output_folder,
+        output_format="WEBP",
+        settings=None,
+        rename_template="{name}"
+    ):
+
+        """
+        Convert multiple images.
+        """
+
+
+        self.reset_results()
+
+
+        settings = settings or {}
+
+
+        output_folder = Path(
+            output_folder
+        )
+
+
+        output_folder.mkdir(
+            parents=True,
+            exist_ok=True
+        )
+
+
+
+        for index, file in enumerate(
+            files,
+            start=1
+        ):
+
+
+            try:
+
+                image = ImageLoader(
+                    str(file)
+                ).load()
+
+
+
+                converter = ImageConverter(
+                    image
+                )
+
+
+
+                filename = self.rename_engine.generate(
+                    file,
+                    output_format,
+                    rename_template,
+                    index
+                )
+
+
+
+                output_file = (
+                    output_folder
+                    /
+                    filename
+                )
+
+
+
+                converter.convert(
+                    str(output_file),
+                    output_format,
+                    settings
+                )
+
+
+
+                self.results["success"].append(
+                    str(output_file)
+                )
+
+
+
+            except Exception as error:
+
+
+                self.results["failed"].append(
+
+                    {
+
+                        "file": str(file),
+
+                        "error": str(error)
+
+                    }
+
+                )
+
+
+
+        return self.results
+</file>
+
+<file path="src/core/converter.py">
+"""
+Image Converter Engine
+"""
+
+from pathlib import Path
+
+from formats.encoder_manager import EncoderManager
+
+from .resize_engine import ResizeEngine
+from .image_edit_engine import ImageEditEngine
+from .optimization_engine import OptimizationEngine
+
+
+
+class ImageConverter:
+
+
+    def __init__(
+        self,
+        image
+    ):
+
+        self.image = image
+
+        self.encoder_manager = EncoderManager()
+
+        self.resize_engine = ResizeEngine()
+
+        self.edit_engine = ImageEditEngine()
+
+        self.optimizer = OptimizationEngine()
+
+
+
+    def convert(
+        self,
+        output_path,
+        output_format,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        output_path = Path(
+            output_path
+        )
+
+
+        image = self.image.copy()
+
+
+
+        # ==================================
+        # Smart Optimization
+        # ==================================
+
+        if settings.get(
+            "auto_optimize",
+            False
+        ):
+
+            recommendation = (
+                self.optimizer.recommend(
+                    image,
+                    output_format
+                )
+            )
+
+
+            settings.update(
+                recommendation
+            )
+
+
+
+        # ==================================
+        # Image Editing
+        # ==================================
+
+
+        if "crop" in settings:
+
+            image = self.edit_engine.crop(
+                image,
+                settings["crop"]
+            )
+
+
+        if "rotate" in settings:
+
+            image = self.edit_engine.rotate(
+                image,
+                settings["rotate"]
+            )
+
+
+        if settings.get(
+            "flip_horizontal",
+            False
+        ):
+
+            image = self.edit_engine.flip_horizontal(
+                image
+            )
+
+
+        if settings.get(
+            "flip_vertical",
+            False
+        ):
+
+            image = self.edit_engine.flip_vertical(
+                image
+            )
+
+
+
+        # ==================================
+        # Resize
+        # ==================================
+
+
+        if "resize" in settings:
+
+            resize_settings = settings["resize"]
+
+
+            image = self.resize_engine.resize_by_pixel(
+                image,
+                resize_settings["width"],
+                resize_settings["height"],
+                resize_settings.get(
+                    "keep_ratio",
+                    True
+                )
+            )
+
+
+
+        # ==================================
+        # Encode Output
+        # ==================================
+
+
+        encoder = self.encoder_manager.get_encoder(
+            output_format
+        )
+
+
+        return encoder.encode(
+            image,
+            str(output_path),
+            settings
+        )
+</file>
+
+<file path="src/core/image_edit_engine.py">
+"""
+Image Edit Engine
+
+Handle:
+- Crop
+- Rotate
+- Flip
+"""
+
+from PIL import Image
+
+
+
+class ImageEditEngine:
+
+
+
+    def crop(
+        self,
+        image,
+        box
+    ):
+
+        """
+        Crop image.
+
+        box:
+        (
+            left,
+            top,
+            right,
+            bottom
+        )
+        """
+
+        return image.crop(
+            box
+        )
+
+
+
+    def crop_center(
+        self,
+        image,
+        width,
+        height
+    ):
+
+        """
+        Center crop.
+        """
+
+        image_width, image_height = image.size
+
+
+        left = (
+            image_width - width
+        ) // 2
+
+
+        top = (
+            image_height - height
+        ) // 2
+
+
+        right = left + width
+
+        bottom = top + height
+
+
+        return image.crop(
+            (
+                left,
+                top,
+                right,
+                bottom
+            )
+        )
+
+
+
+    def rotate(
+        self,
+        image,
+        angle
+    ):
+
+        return image.rotate(
+            angle,
+            expand=True
+        )
+
+
+
+    def flip_horizontal(
+        self,
+        image
+    ):
+
+        return image.transpose(
+            Image.Transpose.FLIP_LEFT_RIGHT
+        )
+
+
+
+    def flip_vertical(
+        self,
+        image
+    ):
+
+        return image.transpose(
+            Image.Transpose.FLIP_TOP_BOTTOM
+        )
+</file>
+
+<file path="src/core/image_loader.py">
+"""
+Image Loader Module
+
+Responsible for:
+- Loading image files
+- Validating image format
+- Reading image metadata
+"""
+
+from pathlib import Path
+from PIL import Image
+
+from pillow_heif import register_heif_opener
+
+import pillow_avif
+
+register_heif_opener()
+
+class ImageLoader:
+    """
+    Handle image loading operation.
+    """
+
+    SUPPORTED_FORMATS = {
+        "JPEG",
+        "PNG",
+        "WEBP",
+        "GIF",
+        "TIFF",
+        "BMP",
+        "HEIC",
+        "HEIF",
+        "AVIF",
+        "SVG",
+    }
+
+    def __init__(self, file_path: str):
+        self.file_path = Path(file_path)
+
+    def validate_file(self):
+        """
+        Check file existence.
+        """
+
+        if not self.file_path.exists():
+            raise FileNotFoundError(
+                f"File not found: {self.file_path}"
+            )
+
+        return True
+
+    def load(self):
+        """
+        Load image using Pillow.
+        """
+
+        self.validate_file()
+
+        image = Image.open(self.file_path)
+
+        return image
+
+    def get_information(self):
+        """
+        Return basic image information.
+        """
+
+        image = self.load()
+
+        return {
+            "filename": self.file_path.name,
+            "format": image.format,
+            "size": image.size,
+            "mode": image.mode,
+        }
+        
+    def get_animation_info(self):
+
+        image = self.load()
+
+        return {
+            "is_animated": getattr(
+                image,
+                "is_animated",
+                False
+            ),
+
+            "frames": getattr(
+                image,
+                "n_frames",
+                1
+            )
+        }
+</file>
+
+<file path="src/core/optimization_engine.py">
+"""
+Smart Compression Optimization Engine
+
+Analyze image characteristics
+and recommend export settings.
+"""
+
+
+from PIL import ImageStat
+
+
+
+class OptimizationEngine:
+
+
+    def analyze(
+        self,
+        image
+    ):
+
+        stat = ImageStat.Stat(
+            image.convert("RGB")
+        )
+
+
+        brightness = sum(
+            stat.mean
+        ) / 3
+
+
+        return {
+
+            "brightness": brightness,
+
+            "width": image.width,
+
+            "height": image.height,
+
+            "has_alpha": (
+                image.mode == "RGBA"
+            )
+
+        }
+
+
+
+    def recommend(
+        self,
+        image,
+        output_format="WEBP"
+    ):
+
+
+        analysis = self.analyze(
+            image
+        )
+
+
+        recommendation = {
+
+
+            "format": output_format,
+
+
+            "quality": 85
+
+        }
+
+
+        # Transparent image
+        if analysis["has_alpha"]:
+
+            recommendation["mode"] = (
+                "lossless"
+            )
+
+            recommendation["quality"] = 90
+
+
+        else:
+
+            recommendation["mode"] = (
+                "lossy"
+            )
+
+
+            # Large photo
+            if (
+                analysis["width"] > 3000
+            ):
+
+                recommendation["quality"] = 75
+
+
+            elif (
+                analysis["width"] > 1500
+            ):
+
+                recommendation["quality"] = 80
+
+
+            else:
+
+                recommendation["quality"] = 85
+
+
+
+        return recommendation
+</file>
+
+<file path="src/core/queue_manager.py">
+"""
+Queue Manager
+
+Manage conversion jobs.
+"""
+
+
+from queue import Queue
+
+
+class QueueManager:
+
+    def __init__(self):
+
+        self.queue = Queue()
+
+
+    def add_job(self, job):
+
+        self.queue.put(job)
+
+
+    def get_job(self):
+
+        if self.queue.empty():
+            return None
+
+        return self.queue.get()
+
+
+    def size(self):
+
+        return self.queue.qsize()
+
+
+    def clear(self):
+
+        while not self.queue.empty():
+
+            self.queue.get()
+</file>
+
+<file path="src/core/rename_engine.py">
+"""
+Rename Engine
+
+Handle output filename generation.
+"""
+
+from datetime import datetime
+
+from pathlib import Path
+
+
+
+class RenameEngine:
+
+
+    def generate(
+        self,
+        original_file,
+        extension,
+        template="{name}"
+        ,
+        number=None
+    ):
+
+        original_file = Path(
+            original_file
+        )
+
+
+        name = original_file.stem
+
+
+        date = datetime.now().strftime(
+            "%Y%m%d"
+        )
+
+
+        filename = template
+
+
+        filename = filename.replace(
+            "{name}",
+            name
+        )
+
+
+        filename = filename.replace(
+            "{date}",
+            date
+        )
+
+
+        filename = filename.replace(
+            "{format}",
+            extension.replace(
+                ".",
+                ""
+            )
+        )
+
+
+        if number is not None:
+
+            filename = filename.replace(
+                "{number}",
+                f"{number:03d}"
+            )
+
+
+        return (
+            filename
+            +
+            "."
+            +
+            extension.replace(
+                ".",
+                ""
+            )
+        )
+</file>
+
+<file path="src/core/resize_engine.py">
+"""
+Resize Engine
+
+Handle image resizing operations.
+"""
+
+
+from PIL import Image
+
+
+
+class ResizeEngine:
+
+
+    def resize_by_pixel(
+        self,
+        image,
+        width,
+        height,
+        keep_ratio=True
+    ):
+
+        original_width, original_height = image.size
+
+
+        if keep_ratio:
+
+            ratio = min(
+                width / original_width,
+                height / original_height
+            )
+
+
+            new_size = (
+                int(original_width * ratio),
+                int(original_height * ratio)
+            )
+
+        else:
+
+            new_size = (
+                width,
+                height
+            )
+
+
+        return image.resize(
+            new_size,
+            Image.Resampling.LANCZOS
+        )
+
+
+
+    def resize_by_percentage(
+        self,
+        image,
+        percentage
+    ):
+
+        width, height = image.size
+
+
+        new_size = (
+            int(width * percentage / 100),
+            int(height * percentage / 100)
+        )
+
+
+        return image.resize(
+            new_size,
+            Image.Resampling.LANCZOS
+        )
+</file>
+
+<file path="src/core/worker.py">
+"""
+Worker Processor
+
+Execute queued conversion jobs.
+"""
+
+
+from .image_loader import ImageLoader
+from .converter import ImageConverter
+
+
+
+class Worker:
+
+
+    def __init__(self):
+
+        self.results = {
+            "success": [],
+            "failed": []
+        }
+
+
+
+    def process(self, job):
+
+        try:
+
+            image = ImageLoader(
+                job["input"]
+            ).load()
+
+
+            converter = ImageConverter(
+                image
+            )
+
+
+            result = converter.convert(
+                job["output"],
+                job["format"],
+                job.get(
+                    "quality",
+                    85
+                )
+            )
+
+
+            self.results["success"].append(
+                str(result)
+            )
+
+
+        except Exception as error:
+
+
+            self.results["failed"].append(
+                {
+                    "file": job["input"],
+                    "error": str(error)
+                }
+            )
+
+
+        return self.results
+</file>
+
+<file path="src/database/__init__.py">
+
+</file>
+
+<file path="src/formats/__init__.py">
+from .encoder_manager import EncoderManager
+</file>
+
+<file path="src/formats/avif_encoder.py">
+"""
+AVIF Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class AVIFEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        mode = settings.get(
+            "mode",
+            "lossy"
+        )
+
+
+        quality = settings.get(
+            "quality",
+            60
+        )
+
+
+        options = {}
+
+
+        if mode == "lossless":
+
+            options["lossless"] = True
+
+        else:
+
+            options["quality"] = quality
+
+
+        image.save(
+            output_path,
+            "AVIF",
+            **options
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/base_encoder.py">
+"""
+Base Encoder
+
+Parent class for all format encoders.
+"""
+
+
+class BaseEncoder:
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        raise NotImplementedError(
+            "Encoder must implement encode method"
+        )
+</file>
+
+<file path="src/formats/encoder_manager.py">
+"""
+Encoder Manager
+"""
+
+from .webp_encoder import WebPEncoder
+from .jpg_encoder import JPGEncoder
+from .png_encoder import PNGEncoder
+from .avif_encoder import AVIFEncoder
+from .tiff_encoder import TIFFEncoder
+from .gif_encoder import GIFEncoder
+from .ico_encoder import ICOEncoder
+
+class EncoderManager:
+
+
+    def __init__(self):
+
+        self.encoders = {
+
+    "WEBP": WebPEncoder(),
+
+    "JPG": JPGEncoder(),
+
+    "JPEG": JPGEncoder(),
+
+    "PNG": PNGEncoder(),
+
+    "AVIF": AVIFEncoder(),
+    
+    "TIFF": TIFFEncoder(),
+    
+    "GIF": GIFEncoder(),
+    
+    "ICO": ICOEncoder(),
+
+}
+
+
+
+    def get_encoder(
+        self,
+        format_name
+    ):
+
+        format_name = format_name.upper()
+
+
+        if format_name not in self.encoders:
+
+            raise ValueError(
+                f"Unsupported encoder: {format_name}"
+            )
+
+
+        return self.encoders[
+            format_name
+        ]
+</file>
+
+<file path="src/formats/gif_encoder.py">
+"""
+GIF Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class GIFEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        keep_animation = settings.get(
+            "animation",
+            False
+        )
+
+
+        if (
+            keep_animation
+            and getattr(
+                image,
+                "is_animated",
+                False
+            )
+        ):
+
+            frames = []
+
+
+            for frame in range(
+                image.n_frames
+            ):
+
+                image.seek(
+                    frame
+                )
+
+
+                frames.append(
+                    image.copy()
+                )
+
+
+            first_frame = frames[0]
+
+
+            first_frame.save(
+                output_path,
+                "GIF",
+                save_all=True,
+                append_images=frames[1:],
+                loop=0,
+                duration=image.info.get(
+                    "duration",
+                    100
+                )
+            )
+
+
+        else:
+
+            image.save(
+                output_path,
+                "GIF"
+            )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/ico_encoder.py">
+"""
+ICO Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class ICOEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        sizes = settings.get(
+            "sizes",
+            [
+                (16,16),
+                (32,32),
+                (48,48),
+                (64,64),
+                (128,128),
+                (256,256)
+            ]
+        )
+
+
+        image.save(
+            output_path,
+            "ICO",
+            sizes=sizes
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/jpg_encoder.py">
+"""
+JPEG Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class JPGEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        quality = settings.get(
+            "quality",
+            85
+        )
+
+
+        if image.mode != "RGB":
+
+            image = image.convert(
+                "RGB"
+            )
+
+
+        image.save(
+            output_path,
+            "JPEG",
+            quality=quality,
+            optimize=True
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/png_encoder.py">
+"""
+PNG Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class PNGEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        compression = settings.get(
+            "compression",
+            6
+        )
+
+
+        image.save(
+            output_path,
+            "PNG",
+            compress_level=compression
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/svg_converter.py">
+"""
+SVG Converter
+
+Using Qt SVG Renderer
+"""
+
+from pathlib import Path
+
+from PySide6.QtSvg import QSvgRenderer
+from PySide6.QtGui import QImage, QPainter
+from PySide6.QtCore import QSize
+
+import sys
+
+from PySide6.QtWidgets import QApplication
+
+class SVGConverter:
+
+    def __init__(self):
+
+        self.app_created = False
+
+        if QApplication.instance() is None:
+
+            self.app = QApplication(
+                sys.argv
+            )
+
+            self.app_created = True
+
+
+    def convert(
+        self,
+        input_path,
+        output_path,
+        width=1024,
+        height=1024
+    ):
+
+        input_path = Path(
+            input_path
+        )
+
+
+        if not input_path.exists():
+
+            raise FileNotFoundError(
+                f"SVG not found: {input_path}"
+            )
+
+
+        renderer = QSvgRenderer(
+            str(input_path)
+        )
+
+
+        if not renderer.isValid():
+
+            raise ValueError(
+                "Invalid SVG file"
+            )
+
+
+        image = QImage(
+            QSize(
+                width,
+                height
+            ),
+            QImage.Format_ARGB32
+        )
+
+
+        image.fill(0)
+
+
+        painter = QPainter(
+            image
+        )
+
+
+        renderer.render(
+            painter
+        )
+
+
+        painter.end()
+
+
+        image.save(
+            output_path
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/tiff_encoder.py">
+"""
+TIFF Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class TIFFEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        compression = settings.get(
+            "compression",
+            "tiff_lzw"
+        )
+
+
+        image.save(
+            output_path,
+            "TIFF",
+            compression=compression
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/formats/webp_encoder.py">
+"""
+WEBP Encoder
+"""
+
+from .base_encoder import BaseEncoder
+
+
+
+class WebPEncoder(BaseEncoder):
+
+
+    def encode(
+        self,
+        image,
+        output_path,
+        settings=None
+    ):
+
+        settings = settings or {}
+
+
+        mode = settings.get(
+            "mode",
+            "lossy"
+        )
+
+
+        quality = settings.get(
+            "quality",
+            85
+        )
+
+
+        options = {}
+
+
+        if mode == "lossless":
+
+            options["lossless"] = True
+
+        else:
+
+            options["quality"] = quality
+
+
+        image.save(
+            output_path,
+            "WEBP",
+            **options
+        )
+
+
+        return output_path
+</file>
+
+<file path="src/ui/themes/style.qss">
+QMainWindow {
+
+    background-color: #202124;
+
+}
+
+
+QWidget {
+
+    color: white;
+    font-size: 14px;
+
+}
+
+
+QPushButton {
+
+    background-color: #3c4043;
+    border-radius: 8px;
+    padding: 10px;
+
+}
+
+
+QPushButton:hover {
+
+    background-color: #5f6368;
+
+}
+
+
+QFrame {
+
+    background-color: #303134;
+    border-radius: 12px;
+
+}
+</file>
+
+<file path="src/ui/widgets/batch_page.py">
+"""
+Batch Processing Page
+"""
+
+from pathlib import Path
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QLabel,
+    QFileDialog,
+    QComboBox
+)
+
+
+from core.batch_processor import BatchProcessor
+
+from .progress_widget import ProgressWidget
+from .conversion_worker import ConversionWorker
+
+
+
+class BatchPage(QWidget):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.worker = None
+
+        self.files = []
+
+        self.output_folder = None
+
+        self.setup_ui()
+
+
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+
+        self.file_label = QLabel(
+            "No files selected"
+        )
+
+
+        self.select_button = QPushButton(
+            "Select Images"
+        )
+
+
+        self.folder_button = QPushButton(
+            "Select Folder"
+        )
+
+
+        self.format_box = QComboBox()
+
+        self.format_box.addItems(
+            [
+                "JPG",
+                "PNG",
+                "WEBP"
+            ]
+        )
+
+
+        self.output_button = QPushButton(
+            "Select Output Folder"
+        )
+
+
+        self.convert_button = QPushButton(
+            "Start Batch Convert"
+        )
+
+
+        self.status_label = QLabel(
+            "Waiting..."
+        )
+
+
+        self.progress_widget = ProgressWidget()
+
+
+
+        widgets = [
+            self.file_label,
+            self.select_button,
+            self.folder_button,
+            self.format_box,
+            self.output_button,
+            self.convert_button,
+            self.progress_widget,
+            self.status_label
+        ]
+
+
+        for widget in widgets:
+
+            layout.addWidget(
+                widget
+            )
+
+
+        self.setLayout(
+            layout
+        )
+
+
+        self.select_button.clicked.connect(
+            self.select_files
+        )
+
+
+        self.folder_button.clicked.connect(
+            self.select_folder
+        )
+
+
+        self.output_button.clicked.connect(
+            self.select_output_folder
+        )
+
+
+        self.convert_button.clicked.connect(
+            self.convert
+        )
+
+
+
+    def select_files(self):
+
+        files, _ = QFileDialog.getOpenFileNames(
+            self,
+            "Select Images",
+            "",
+            "Images (*.jpg *.jpeg *.png *.webp *.heic *.heif)"
+        )
+
+
+        self.files = [
+            Path(file)
+            for file in files
+        ]
+
+
+        self.file_label.setText(
+            f"{len(self.files)} files selected"
+        )
+
+
+
+    def select_folder(self):
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select Folder"
+        )
+
+
+        if folder:
+
+            processor = BatchProcessor()
+
+
+            self.files = (
+                processor.get_images_from_folder(
+                    folder
+                )
+            )
+
+
+            self.file_label.setText(
+                f"{len(self.files)} files found"
+            )
+
+
+
+    def select_output_folder(self):
+
+        folder = QFileDialog.getExistingDirectory(
+            self,
+            "Select Output Folder"
+        )
+
+
+        if folder:
+
+            self.output_folder = Path(folder)
+
+
+            self.status_label.setText(
+                f"Output: {folder}"
+            )
+
+
+
+    def convert(self):
+
+        if not self.files:
+
+            self.status_label.setText(
+                "No files selected"
+            )
+
+            return
+
+
+        if not self.output_folder:
+
+            self.output_folder = (
+                self.files[0].parent
+                /
+                "batch_output"
+            )
+
+
+        self.status_label.setText(
+            "Processing..."
+        )
+
+
+        self.worker = ConversionWorker(
+            self.files,
+            self.output_folder,
+            self.format_box.currentText()
+        )
+
+
+        self.worker.progress.connect(
+            self.progress_widget.update_progress
+        )
+
+
+        self.worker.finished.connect(
+            self.finished_process
+        )
+
+
+        self.worker.start()
+
+
+
+    def finished_process(
+        self,
+        result
+    ):
+
+        success = len(
+            result["success"]
+        )
+
+
+        failed = len(
+            result["failed"]
+        )
+
+
+        self.status_label.setText(
+            f"Finished | Success: {success} | Failed: {failed}"
+        )
+</file>
+
+<file path="src/ui/widgets/cards.py">
+"""
+Dashboard Card Component
+"""
+
+from PySide6.QtWidgets import (
+    QFrame,
+    QVBoxLayout,
+    QLabel
+)
+
+
+class InfoCard(QFrame):
+
+    def __init__(
+        self,
+        title,
+        value
+    ):
+        super().__init__()
+
+        self.setup_ui(
+            title,
+            value
+        )
+
+
+    def setup_ui(
+        self,
+        title,
+        value
+    ):
+
+        layout = QVBoxLayout()
+
+
+        title_label = QLabel(
+            title
+        )
+
+        value_label = QLabel(
+            value
+        )
+
+
+        layout.addWidget(
+            title_label
+        )
+
+        layout.addWidget(
+            value_label
+        )
+
+
+        self.setLayout(
+            layout
+        )
+
+
+        self.setFixedHeight(
+            120
+        )
+</file>
+
+<file path="src/ui/widgets/content_area.py">
+"""
+Main Content Area
+"""
+
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout
+)
+
+from .settings_page import SettingsPage
+
+
+
+class ContentArea(QWidget):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setup_ui()
+
+
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+
+        dashboard = SettingsPage()
+
+
+        layout.addWidget(
+            dashboard
+        )
+
+
+        self.setLayout(
+            layout
+        )
+</file>
+
+<file path="src/ui/widgets/conversion_worker.py">
+"""
+Conversion Background Worker
+"""
+
+from PySide6.QtCore import (
+    QThread,
+    Signal
+)
+
+from core.batch_processor import BatchProcessor
+
+
+
+class ConversionWorker(QThread):
+
+    progress = Signal(
+        int,
+        int
+    )
+
+    finished = Signal(
+        dict
+    )
+
+
+    def __init__(
+        self,
+        files,
+        output,
+        format
+    ):
+
+        super().__init__()
+
+        self.files = files
+        self.output = output
+        self.format = format
+
+
+
+    def run(self):
+
+        processor = BatchProcessor()
+
+
+        total = len(
+            self.files
+        )
+
+
+        completed = 0
+
+
+        for file in self.files:
+
+
+            result = processor.process_files(
+                [file],
+                self.output,
+                self.format
+            )
+
+
+            completed += 1
+
+
+            self.progress.emit(
+                completed,
+                total
+            )
+
+
+        self.finished.emit(
+            processor.results
+        )
+</file>
+
+<file path="src/ui/widgets/converter_page.py">
+"""
+Converter Page UI
+"""
+
+from pathlib import Path
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QPushButton,
+    QLabel,
+    QFileDialog,
+    QComboBox
+)
+
+from core.image_loader import ImageLoader
+from core.converter import ImageConverter
+
+
+
+class ConverterPage(QWidget):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.selected_file = None
+
+        self.setup_ui()
+
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+
+        self.file_label = QLabel(
+            "No image selected"
+        )
+
+
+        self.select_button = QPushButton(
+            "Select Image"
+        )
+
+
+        self.format_box = QComboBox()
+
+        self.format_box.addItems(
+            [
+                "JPG",
+                "PNG",
+                "WEBP",
+                "AVIF",
+                "TIFF",
+                "GIF",
+                "ICO",
+                "SVG",
+            ]
+        )
+
+
+        self.convert_button = QPushButton(
+            "Convert"
+        )
+
+
+        self.status_label = QLabel(
+            ""
+        )
+
+
+        layout.addWidget(
+            self.file_label
+        )
+
+        layout.addWidget(
+            self.select_button
+        )
+
+        layout.addWidget(
+            self.format_box
+        )
+
+        layout.addWidget(
+            self.convert_button
+        )
+
+        layout.addWidget(
+            self.status_label
+        )
+
+
+        self.setLayout(
+            layout
+        )
+
+
+        self.select_button.clicked.connect(
+            self.select_image
+        )
+
+
+        self.convert_button.clicked.connect(
+            self.convert_image
+        )
+
+
+    def select_image(self):
+
+        file, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select Image",
+            "",
+            "Images (*.jpg *.jpeg *.png *.webp *.heic *.heif)"
+        )
+
+
+        if file:
+
+            self.selected_file = file
+
+            self.file_label.setText(
+                file
+            )
+
+
+    def convert_image(self):
+
+        if not self.selected_file:
+
+            self.status_label.setText(
+                "Please select image first"
+            )
+
+            return
+
+
+        try:
+
+            image = ImageLoader(
+                self.selected_file
+            ).load()
+
+
+            converter = ImageConverter(
+                image
+            )
+
+
+            output = Path(
+                self.selected_file
+            ).with_suffix(
+                ".webp"
+            )
+
+
+            converter.convert(
+                str(output),
+                self.format_box.currentText()
+            )
+
+
+            self.status_label.setText(
+                f"Saved: {output}"
+            )
+
+
+        except Exception as error:
+
+            self.status_label.setText(
+                str(error)
+            )
+</file>
+
+<file path="src/ui/widgets/dashboard.py">
+"""
+Dashboard Page
+"""
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton
+)
+
+from PySide6.QtCore import Qt
+
+from .cards import InfoCard
+
+
+
+class Dashboard(QWidget):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setup_ui()
+
+
+
+    def setup_ui(self):
+
+        main_layout = QVBoxLayout()
+
+
+        title = QLabel(
+            "Welcome to Image Converter Pro Offline"
+        )
+
+
+        title.setAlignment(
+            Qt.AlignCenter
+        )
+
+
+        main_layout.addWidget(
+            title
+        )
+
+
+        action_layout = QHBoxLayout()
+
+
+        add_file = QPushButton(
+            "Add Image"
+        )
+
+        add_folder = QPushButton(
+            "Add Folder"
+        )
+
+
+        action_layout.addWidget(
+            add_file
+        )
+
+        action_layout.addWidget(
+            add_folder
+        )
+
+
+        main_layout.addLayout(
+            action_layout
+        )
+
+
+        stats_layout = QHBoxLayout()
+
+
+        stats_layout.addWidget(
+            InfoCard(
+                "Files Processed",
+                "0"
+            )
+        )
+
+
+        stats_layout.addWidget(
+            InfoCard(
+                "Saved Space",
+                "0 MB"
+            )
+        )
+
+
+        stats_layout.addWidget(
+            InfoCard(
+                "Current Jobs",
+                "0"
+            )
+        )
+
+
+        main_layout.addLayout(
+            stats_layout
+        )
+
+
+        self.setLayout(
+            main_layout
+        )
+</file>
+
+<file path="src/ui/widgets/progress_widget.py">
+"""
+Progress Widget
+"""
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QProgressBar
+)
+
+
+class ProgressWidget(QWidget):
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setup_ui()
+
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+
+        self.status_label = QLabel(
+            "Waiting..."
+        )
+
+
+        self.progress = QProgressBar()
+
+
+        self.progress.setValue(
+            0
+        )
+
+
+        layout.addWidget(
+            self.status_label
+        )
+
+
+        layout.addWidget(
+            self.progress
+        )
+
+
+        self.setLayout(
+            layout
+        )
+
+
+    def update_progress(
+        self,
+        current,
+        total
+    ):
+
+        percentage = int(
+            (current / total) * 100
+        )
+
+
+        self.progress.setValue(
+            percentage
+        )
+
+
+        self.status_label.setText(
+            f"Processing {current}/{total}"
+        )
+</file>
+
+<file path="src/ui/widgets/settings_page.py">
+"""
+Settings Page
+"""
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QLabel,
+    QComboBox,
+    QSpinBox,
+    QPushButton
+)
+
+
+from utils.settings_manager import SettingsManager
+
+
+
+class SettingsPage(QWidget):
+
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.manager = SettingsManager()
+
+        self.setup_ui()
+
+
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+
+        title = QLabel(
+            "Application Settings"
+        )
+
+
+        self.format_box = QComboBox()
+
+        self.format_box.addItems(
+            [
+                "JPG",
+                "PNG",
+                "WEBP",
+                "AVIF",
+                "TIFF",
+                "ICO",
+                "SVG",
+            ]
+        )
+
+
+        self.quality_box = QSpinBox()
+
+        self.quality_box.setRange(
+            1,
+            100
+        )
+
+
+        self.webp_mode = QComboBox()
+
+        self.webp_mode.addItems(
+            [
+                "lossy",
+                "lossless"
+            ]
+        )
+
+
+        self.save_button = QPushButton(
+            "Save Settings"
+        )
+
+
+        layout.addWidget(
+            title
+        )
+
+
+        layout.addWidget(
+            QLabel(
+                "Default Format"
+            )
+        )
+
+        layout.addWidget(
+            self.format_box
+        )
+
+
+        layout.addWidget(
+            QLabel(
+                "WEBP Mode"
+            )
+        )
+
+
+        layout.addWidget(
+            self.webp_mode
+        )
+
+
+        layout.addWidget(
+            QLabel(
+                "WEBP Quality"
+            )
+        )
+
+
+        layout.addWidget(
+            self.quality_box
+        )
+
+
+        layout.addWidget(
+            self.save_button
+        )
+
+
+        self.setLayout(
+            layout
+        )
+
+
+        self.load_settings()
+
+
+        self.save_button.clicked.connect(
+            self.save_settings
+        )
+
+
+
+    def load_settings(self):
+
+        format_value = self.manager.get(
+            "default_format"
+        )
+
+
+        index = self.format_box.findText(
+            format_value
+        )
+
+
+        if index >= 0:
+
+            self.format_box.setCurrentIndex(
+                index
+            )
+
+
+        self.webp_mode.setCurrentText(
+            self.manager.get(
+                "webp_mode"
+            )
+        )
+
+
+        self.quality_box.setValue(
+            self.manager.get(
+                "webp_quality"
+            )
+        )
+
+
+
+    def save_settings(self):
+
+        self.manager.set(
+            "default_format",
+            self.format_box.currentText()
+        )
+
+
+        self.manager.set(
+            "webp_mode",
+            self.webp_mode.currentText()
+        )
+
+
+        self.manager.set(
+            "webp_quality",
+            self.quality_box.value()
+        )
+</file>
+
+<file path="src/ui/widgets/sidebar.py">
+"""
+Sidebar Widget
+"""
+
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QPushButton
+)
+
+
+class Sidebar(QWidget):
+
+    def __init__(self):
+        super().__init__()
+
+        self.setup_ui()
+
+
+    def setup_ui(self):
+
+        layout = QVBoxLayout()
+
+
+        buttons = [
+            "Dashboard",
+            "Converter",
+            "Batch Process",
+            "Settings"
+        ]
+
+
+        for item in buttons:
+
+            button = QPushButton(item)
+
+            layout.addWidget(button)
+
+
+        layout.addStretch()
+
+
+        self.setLayout(layout)
+
+
+        self.setFixedWidth(
+            220
+        )
+</file>
+
+<file path="src/ui/windows/main_window.py">
+"""
+Main Application Window
+"""
+
+from PySide6.QtWidgets import (
+    QMainWindow,
+    QWidget,
+    QHBoxLayout
+)
+
+
+from ui.widgets.sidebar import Sidebar
+from ui.widgets.content_area import ContentArea
+
+
+
+class MainWindow(QMainWindow):
+
+
+    def __init__(self):
+
+        super().__init__()
+
+        self.setup_ui()
+
+
+
+    def setup_ui(self):
+
+        self.setWindowTitle(
+            "Image Converter Pro Offline"
+        )
+
+
+        self.resize(
+            1200,
+            750
+        )
+
+
+        container = QWidget()
+
+
+        layout = QHBoxLayout()
+
+
+        sidebar = Sidebar()
+
+        content = ContentArea()
+
+
+        layout.addWidget(
+            sidebar
+        )
+
+
+        layout.addWidget(
+            content
+        )
+
+
+        container.setLayout(
+            layout
+        )
+
+
+        self.setCentralWidget(
+            container
+        )
+</file>
+
+<file path="src/ui/__init__.py">
+
+</file>
+
+<file path="src/utils/__init__.py">
+from .preset_manager import PresetManager
+</file>
+
+<file path="src/utils/default_presets.py">
+"""
+Default Application Presets
+"""
+
+
+DEFAULT_PRESETS = {
+
+
+    "Website Optimization":
+
+    {
+
+        "format": "WEBP",
+
+        "mode": "lossy",
+
+        "quality": 80,
+
+        "auto_optimize": True
+
+    },
+
+
+
+    "Archive Quality":
+
+    {
+
+        "format": "WEBP",
+
+        "mode": "lossless",
+
+        "quality": 100
+
+    },
+
+
+
+    "Social Media":
+
+    {
+
+        "format": "JPG",
+
+        "quality": 90,
+
+        "resize":
+
+        {
+
+            "width":1080,
+
+            "height":1080,
+
+            "keep_ratio":True
+
+        }
+
+    }
+
+}
+</file>
+
+<file path="src/utils/preset_manager.py">
+"""
+Preset Manager
+
+Store conversion presets locally.
+"""
+
+
+import json
+
+from pathlib import Path
+
+
+
+PRESET_FILE = (
+
+    Path.home()
+
+    /
+
+    ".image_converter_presets.json"
+
+)
+
+
+
+class PresetManager:
+
+
+
+    def __init__(self):
+
+        self.presets = {}
+
+        self.load()
+
+
+
+    def load(self):
+
+        if PRESET_FILE.exists():
+
+            with open(
+                PRESET_FILE,
+                "r"
+            ) as file:
+
+                self.presets = json.load(
+                    file
+                )
+
+        else:
+
+            self.presets = {}
+
+
+
+    def save(self):
+
+        with open(
+            PRESET_FILE,
+            "w"
+        ) as file:
+
+            json.dump(
+                self.presets,
+                file,
+                indent=4
+            )
+
+
+
+    def create(
+        self,
+        name,
+        settings
+    ):
+
+        self.presets[name] = settings
+
+        self.save()
+
+
+
+    def get(
+        self,
+        name
+    ):
+
+        return self.presets.get(
+            name
+        )
+
+
+
+    def delete(
+        self,
+        name
+    ):
+
+        if name in self.presets:
+
+            del self.presets[name]
+
+            self.save()
+
+
+
+    def list_presets(self):
+
+        return list(
+            self.presets.keys()
+        )
+</file>
+
+<file path="src/utils/settings_manager.py">
+"""
+Application Settings Manager
+
+Store user preferences locally.
+"""
+
+import json
+
+from pathlib import Path
+
+
+
+SETTINGS_PATH = (
+    Path.home()
+    /
+    ".image_converter_pro_settings.json"
+)
+
+
+
+DEFAULT_SETTINGS = {
+
+    "default_format": "WEBP",
+
+    "webp_mode": "lossy",
+
+    "webp_quality": 85,
+
+    "default_output": "",
+
+    "theme": "dark"
+
+}
+
+
+
+class SettingsManager:
+
+
+    def __init__(self):
+
+        self.settings = {}
+
+        self.load()
+
+
+
+    def load(self):
+
+        if SETTINGS_PATH.exists():
+
+            with open(
+                SETTINGS_PATH,
+                "r"
+            ) as file:
+
+                self.settings = json.load(file)
+
+        else:
+
+            self.settings = DEFAULT_SETTINGS.copy()
+
+
+
+    def save(self):
+
+        with open(
+            SETTINGS_PATH,
+            "w"
+        ) as file:
+
+            json.dump(
+                self.settings,
+                file,
+                indent=4
+            )
+
+
+
+    def get(
+        self,
+        key
+    ):
+
+        return self.settings.get(
+            key
+        )
+
+
+
+    def set(
+        self,
+        key,
+        value
+    ):
+
+        self.settings[key] = value
+
+        self.save()
+</file>
+
+<file path="src/application.py">
+"""
+Application Launcher
+
+Image Converter Pro Offline
+"""
+
+
+import sys
+
+from PySide6.QtWidgets import QApplication
+
+from ui.windows.main_window import MainWindow
+
+
+
+def run():
+
+    app = QApplication(sys.argv)
+
+
+    # Load Application Theme
+    try:
+
+        with open(
+            "ui/themes/style.qss",
+            "r"
+        ) as style:
+
+            app.setStyleSheet(
+                style.read()
+            )
+
+    except FileNotFoundError:
+
+        print(
+            "Theme file not found, using default style"
+        )
+
+
+    window = MainWindow()
+
+    window.show()
+
+
+    sys.exit(
+        app.exec()
+    )
+
+
+
+if __name__ == "__main__":
+
+    run()
+</file>
+
+<file path="src/config.py">
+"""
+Application Configuration
+Image Converter Pro Offline
+"""
+
+APP_NAME = "Image Converter Pro Offline"
+
+APP_VERSION = "0.1.0"
+
+ENVIRONMENT = "development"
+
+
+SUPPORTED_INPUT_FORMATS = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+    "heic",
+    "heif",
+    "avif",
+    "gif",
+    "tiff",
+    "bmp",
+    "svg",
+]
+
+
+SUPPORTED_OUTPUT_FORMATS = [
+    "jpg",
+    "jpeg",
+    "png",
+    "webp",
+    "avif",
+    "tiff",
+    "gif",
+    "ico",
+    "svg",
+]
+</file>
+
+<file path="src/main.py">
+"""
+Image Converter Pro Offline
+Entry Point
+"""
+
+from application import run
+
+
+if __name__ == "__main__":
+    run()
+</file>
+
+<file path="tests/test_batch_processor.py">
+from pathlib import Path
+
+from core.batch_processor import BatchProcessor
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_batch_processing():
+
+    processor = BatchProcessor()
+
+
+    files = [
+        PROJECT_ROOT / "assets" / "test" / "sample.jpg"
+    ]
+
+
+    output_folder = (
+        PROJECT_ROOT
+        / "assets"
+        / "test"
+        / "output"
+    )
+
+
+    result = processor.process_files(
+        files,
+        output_folder,
+        "WEBP"
+    )
+
+
+    assert len(
+        result["success"]
+    ) == 1
+</file>
+
+<file path="tests/test_converter.py">
+from pathlib import Path
+
+from core.image_loader import ImageLoader
+from core.converter import ImageConverter
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_jpg_to_webp():
+
+    input_file = (
+        PROJECT_ROOT
+        / "assets"
+        / "test"
+        / "sample.jpg"
+    )
+
+    output_file = (
+        PROJECT_ROOT
+        / "assets"
+        / "test"
+        / "output"
+        / "result_test.webp"
+    )
+
+
+    image = ImageLoader(
+        str(input_file)
+    ).load()
+
+
+    converter = ImageConverter(
+        image
+    )
+
+
+    output = converter.convert(
+        str(output_file),
+        "WEBP"
+    )
+
+
+    assert output.exists()
+</file>
+
+<file path="tests/test_image_loader.py">
+from pathlib import Path
+
+from core.image_loader import ImageLoader
+
+
+def test_loader_class_exists():
+
+    loader = ImageLoader(
+        "sample.jpg"
+    )
+
+    assert loader.file_path.name == "sample.jpg"
+</file>
+
+<file path="tests/test_queue_worker.py">
+from pathlib import Path
+
+from core.queue_manager import QueueManager
+from core.worker import Worker
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+
+
+def test_queue_worker():
+
+    queue = QueueManager()
+
+
+    input_file = (
+        PROJECT_ROOT
+        / "assets"
+        / "test"
+        / "sample.jpg"
+    )
+
+
+    output_file = (
+        PROJECT_ROOT
+        / "assets"
+        / "test"
+        / "output"
+        / "queue_test.webp"
+    )
+
+
+    job = {
+        "input": str(input_file),
+        "output": str(output_file),
+        "format": "WEBP",
+        "quality": 80
+    }
+
+
+    queue.add_job(job)
+
+
+    assert queue.size() == 1
+
+
+    worker = Worker()
+
+
+    result = worker.process(
+        queue.get_job()
+    )
+
+
+    assert len(
+        result["success"]
+    ) == 1
+</file>
+
+<file path=".gitignore">
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+
+# IDE
+.vscode/
+
+# Build
+build/
+dist/
+
+# Application
+*.exe
+
+# AI Models
+models/*.onnx
+models/*.pth
+
+# Database
+*.db
+
+# Logs
+*.log
+</file>
+
+<file path="pytest.ini">
+[pytest]
+
+pythonpath = src
+
+testpaths = tests
+</file>
+
+<file path="requirements-dev.txt">
+-r requirements.txt
+
+black
+flake8
+pytest-cov
+</file>
+
+<file path="requirements.txt">
+# ===================================
+# Image Converter Pro Offline
+# Core Dependencies
+# ===================================
+
+# GUI Framework
+PySide6
+
+# Image Processing
+Pillow
+pillow-heif
+pillow-avif-plugin
+opencv-python
+numpy
+
+
+# Utilities
+loguru
+tqdm
+
+# Testing
+pytest
+</file>
+
+<file path="README.md">
+# Image-Converter-Pro-Offline
+
+Professional local image conversion and optimization desktop application.
+
+## Features
+
+- Image format conversion
+- Batch processing
+- Local processing
+- AI background removal
+- Offline workflow
+
+## Technology
+
+- Python
+- PySide6
+- Pillow
+- OpenCV
+
+## Development
+
+This project runs fully offline.
+</file>
+
+</files>

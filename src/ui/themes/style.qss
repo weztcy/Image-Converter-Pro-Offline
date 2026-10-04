@@ -1,0 +1,362 @@
+/*
+Application Theme
+Image Converter Pro Offline
+*/
+
+
+/* ==============================
+   Main Window
+============================== */
+
+
+QMainWindow {
+
+    background-color: #202124;
+
+}
+
+
+
+/* ==============================
+   Global
+============================== */
+
+
+QWidget {
+
+    color: white;
+
+    font-size: 14px;
+
+}
+
+
+QLabel {
+
+    color: white;
+
+}
+
+
+
+/* ==============================
+   Buttons
+============================== */
+
+
+QPushButton {
+
+    background-color: #3c4043;
+
+    border-radius: 8px;
+
+    padding: 10px 16px;
+
+}
+
+
+QPushButton:hover {
+
+    background-color: #5f6368;
+
+}
+
+
+QPushButton:pressed {
+
+    background-color: #8ab4f8;
+
+}
+
+
+QPushButton:disabled {
+
+    background-color: #303134;
+
+    color: #777;
+
+}
+
+
+
+/* ==============================
+   Base Components
+============================== */
+
+
+QFrame#BaseCard {
+
+    background-color: #303134;
+
+    border-radius: 12px;
+
+}
+
+
+
+QFrame#BasePanel {
+
+    background-color: #28292c;
+
+    border-radius: 16px;
+
+    padding: 16px;
+
+}
+
+
+
+/* ==============================
+   Dashboard
+============================== */
+
+
+QLabel#DashboardTitle {
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+}
+
+
+
+QLabel#SectionTitle {
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+}
+
+
+
+/* ==============================
+   Info Card
+============================== */
+
+
+QFrame#InfoCard {
+
+    background-color: #303134;
+
+    border-radius: 14px;
+
+    padding: 12px;
+
+}
+
+
+QFrame#InfoCard:hover {
+
+    background-color: #38393d;
+
+}
+
+
+
+QLabel#CardTitle {
+
+    font-size: 12px;
+
+    color: #b0b3b8;
+
+}
+
+
+
+QLabel#CardValue {
+
+    font-size: 28px;
+
+    font-weight: bold;
+
+}
+
+
+
+QLabel#CardSubtitle {
+
+    font-size: 11px;
+
+    color: #9aa0a6;
+
+}
+
+
+
+/* ==============================
+   Converter Drop Area
+============================== */
+
+
+QFrame#DropArea {
+
+    background-color: #28292c;
+
+    border-radius: 16px;
+
+    border: 2px dashed #5f6368;
+
+}
+
+
+
+QFrame#DropArea:hover {
+
+    border-color: #8ab4f8;
+
+}
+
+
+
+/* ==============================
+   Preview Panel
+============================== */
+
+
+QFrame#PreviewPanel {
+
+    background-color: #303134;
+
+    border-radius: 16px;
+
+    padding: 15px;
+
+}
+
+
+
+QLabel#ImagePreview {
+
+    background-color: #202124;
+
+    border-radius: 12px;
+
+    color: #9aa0a6;
+
+    font-size: 16px;
+
+}
+
+
+
+/* ==============================
+   Control Panel
+============================== */
+
+
+QFrame#ControlPanel {
+
+    background-color: #303134;
+
+    border-radius: 16px;
+
+    padding: 16px;
+
+}
+
+
+
+QCheckBox {
+
+    spacing: 8px;
+
+}
+
+
+
+/* ==============================
+   Slider
+============================== */
+
+
+QSlider::groove:horizontal {
+
+    height: 6px;
+
+    border-radius: 3px;
+
+    background-color: #3c4043;
+
+}
+
+
+
+QSlider::handle:horizontal {
+
+    width: 16px;
+
+    margin: -6px 0;
+
+    border-radius: 8px;
+
+    background-color: #8ab4f8;
+
+}
+
+
+
+/* ==============================
+   Progress
+============================== */
+
+
+QFrame#ConversionProgress {
+
+    background-color: #303134;
+
+    border-radius: 12px;
+
+    padding: 12px;
+
+}
+
+
+
+QLabel#ProgressStatus {
+
+    font-size: 14px;
+
+}
+
+
+
+QProgressBar {
+
+    border-radius: 8px;
+
+    height: 18px;
+
+    text-align: center;
+
+    background-color: #202124;
+
+}
+
+
+
+QProgressBar::chunk {
+
+    border-radius: 8px;
+
+    background-color: #8ab4f8;
+
+}
+
+
+
+/* ==============================
+   Status
+============================== */
+
+
+QLabel#StatusLabel {
+
+    font-size: 14px;
+
+    padding: 8px;
+
+    color: #b0b3b8;
+
+}

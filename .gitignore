@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+
+# IDE
+.vscode/
+
+# Build
+build/
+dist/
+
+# Application
+*.exe
+
+# AI Models
+models/*.onnx
+models/*.pth
+
+# Database
+*.db
+
+# Logs
+*.log
